@@ -1,0 +1,4 @@
+env:
+  name: hopper
+  source: "brax"
+  backend: mjx

@@ -1,0 +1,86 @@
+import os
+import numpy as np
+
+# continuous_envs = [
+#     "hopper", "walker2d"
+# ]
+continuous_envs = [
+    "hopper", "walker2d", "inverted_pendulum", "inverted_double_pendulum",
+    "ant", "halfcheetah", "humanoid", "reacher",
+]
+# continuous_envs = ["hopper"]
+discrete_envs = []
+# discrete_envs = ["cartpole"]
+envs = continuous_envs + discrete_envs
+tols = [1e-5, 1e-6]
+Ts = [1000]
+
+targets = expand(
+    "results/{env}/{seed}/timing.csv",
+    env=envs, seed=range(30)
+)
+
+
+rule agents:
+    input:
+        expand(
+            "results/{env}/checkpoints/_METADATA",
+            env=envs
+        )
+
+
+rule rollout_times:
+    input:
+        targets
+
+
+rule rollout_time:
+    input:
+        directory("results/{env}/{seed}/checkpoints/")
+    output:
+        "results/{env}/{seed}/timing.csv"
+    params:
+        policy_config=lambda wc: (
+            "config/policies/continuous_small.yaml"
+            if wc.env in continuous_envs
+            else "config/policies/discrete_small.yaml"
+        )
+    shell:
+        """
+        python rollout_times_all_iterates.py with \
+        config/mujoco_sys.yaml \
+        {params.policy_config} \
+        T=200 \
+        checkpoint_dir=results/{wildcards.env}/{wildcards.seed}/checkpoints \
+        output={output:q} \
+        picard.max_iters=200 \
+        picard.tol=0. lam=1 n_seeds=1 \
+        env.name={wildcards.env} \
+        env.source=brax \
+        env.backend=mjx \
+        seed={wildcards.seed}
+        """
+
+
+rule train_base_agent:
+    output:
+        directory("results/{env}/{seed}/checkpoints/")
+    params:
+        ckpt_dir=lambda wc: os.path.join(os.getcwd(), f"results/{wc.env}/{wc.seed}/checkpoints"),
+        policy_config=lambda wc: (
+            "config/policies/continuous_small.yaml"
+            if wc.env in continuous_envs
+            else "config/policies/discrete_small.yaml"
+        )
+    shell:
+        """
+        python ppo.py with \
+        config/cleanrl_default.yaml \
+        env.name={wildcards.env} \
+        env.source=brax \
+        env.backend=mjx \
+        {params.policy_config} \
+        output_dir={params.ckpt_dir} \
+        seed={wildcards.seed} \
+        TOTAL_TIMESTEPS=100000
+        """

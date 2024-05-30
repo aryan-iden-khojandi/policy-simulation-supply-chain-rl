@@ -1,0 +1,4 @@
+env:
+  name: walker2d
+  source: "brax"
+  backend: "mjx"

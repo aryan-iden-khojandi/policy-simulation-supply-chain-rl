@@ -1,0 +1,9 @@
+policy:
+  class_name: discrete
+  actor:
+    num_hidden_units:  64
+    num_hidden_layers:  2
+
+  critic:
+    num_hidden_units:  64
+    num_hidden_layers:  2

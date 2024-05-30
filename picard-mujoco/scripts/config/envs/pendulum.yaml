@@ -1,0 +1,3 @@
+env:
+  name: Pendulum-v1
+  source: "gymnax"

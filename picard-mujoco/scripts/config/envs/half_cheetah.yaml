@@ -1,0 +1,4 @@
+env:
+  name: half_cheetah
+  source: "brax"
+  backend: "mjx"

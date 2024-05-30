@@ -1,0 +1,4 @@
+env:
+  name: inverted_pendulum
+  source: "brax"
+  backend: "spring"
